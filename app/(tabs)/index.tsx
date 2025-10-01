@@ -1,5 +1,5 @@
 import { StyleSheet, ScrollView, View } from 'react-native';
-import { Card, Text, Appbar } from 'react-native-paper';
+import { Card, Text, Appbar, FAB } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
@@ -10,6 +10,10 @@ export default function HomeScreen() {
     { id: 4, title: 'Card 4', description: 'This is a placeholder card' },
     { id: 5, title: 'Card 5', description: 'This is a placeholder card' },
   ];
+
+  const handleAddTopic = () => {
+    console.log('Add topic pressed');
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -31,6 +35,12 @@ export default function HomeScreen() {
           </Card>
         ))}
       </ScrollView>
+
+      <FAB
+        icon="square-edit-outline"
+        style={styles.fab}
+        onPress={handleAddTopic}
+      />
     </SafeAreaView>
   );
 }
@@ -54,5 +64,11 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     opacity: 0.7,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
   },
 });
