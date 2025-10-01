@@ -2,17 +2,22 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, Alert } from 'react-native';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { useState } from 'react';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
+  const [isLoading, setIsLoading] = useState(false);
+  const storeAuthSession = useMutation(api.auth.storeAuthSession);
+
   const handleLogin = async () => {
     try {
-      // In a real app, you would get this from your backend
-      const redirectUri = 'exp://localhost:8081';
+      setIsLoading(true);
+      const redirectUri = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI || 'exp://localhost:8081';
 
-      // For now, we'll use a placeholder URL - you'll need to implement a backend endpoint
       const authUrl = `https://api.workos.com/user_management/authorize?client_id=${process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&provider=authkit`;
 
       const result = await WebBrowser.openAuthSessionAsync(
@@ -21,19 +26,32 @@ export default function LoginScreen() {
       );
 
       if (result.type === 'success') {
-        // Handle the authorization code
         const url = new URL(result.url);
         const code = url.searchParams.get('code');
 
         if (code) {
-          // Send code to your backend to exchange for tokens
-          console.log('Authorization code:', code);
-          // After successful authentication, navigate to home
+          // TODO: Exchange code for user info via backend API
+          // For now, we'll mock the user data
+          const mockUserData = {
+            authProviderId: 'user_' + Math.random().toString(36).substring(7),
+            authProvider: 'workos',
+            email: 'user@example.com',
+            firstName: 'Test',
+            lastName: 'User',
+          };
+
+          // Store user in Convex
+          const result = await storeAuthSession(mockUserData);
+
+          console.log('User stored:', result);
           router.replace('/(tabs)');
         }
       }
     } catch (error) {
       console.error('Login error:', error);
+      Alert.alert('Login Error', 'Failed to sign in. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,11 +70,13 @@ export default function LoginScreen() {
           style={({ pressed }) => [
             styles.button,
             pressed && styles.buttonPressed,
+            isLoading && styles.buttonDisabled,
           ]}
           onPress={handleLogin}
+          disabled={isLoading}
         >
           <ThemedText style={styles.buttonText}>
-            Sign in with WorkOS
+            {isLoading ? 'Signing in...' : 'Sign in with WorkOS'}
           </ThemedText>
         </Pressable>
       </View>
@@ -98,6 +118,9 @@ const styles = StyleSheet.create({
   },
   buttonPressed: {
     opacity: 0.8,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   buttonText: {
     color: '#FFFFFF',
