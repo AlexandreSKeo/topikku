@@ -42,3 +42,6 @@ app-example
 # env files
 .env
 .env*.local
+
+CLAUDE.md
+.cursor
